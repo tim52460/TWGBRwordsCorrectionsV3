@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>臺灣福音書房用字替換工具</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 80%;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #replacementSummary {
+      margin-top: 10px;
+      color: #555;
+    }
+
+    .highlight {
+      background-color: yellow;
+    }
+
+    .custom-inputs {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .custom-inputs input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>臺灣福音書房用字替換工具</h1>
+
+    <textarea id="inputText" placeholder="輸入你的文字..."></textarea>
+    <button id="replaceButton">替換</button>
+
+    <div id="replacementSummary"></div>
+
+    <h2>更正後的全文</h2>
+    <div id="highlightedText"></div>
+
+    <h2>替換結果</h2>
+    <textarea id="resultText"></textarea>
+
+    <h2>新增自定義錯誤字</h2>
+    <div class="custom-inputs">
+      <input type="text" id="newWrongWord" placeholder="錯誤字">
+      <input type="text" id="newCorrectWord" placeholder="正確字">
+    </div>
+    <button id="addWordButton">新增錯誤字對照</button>
+  </div>
+
+  <script>
+    // 更新對照表
+    const correctionMap = {
+      '為': '爲', '啟': '啓', '裡': '裏', '夠': '彀', '什': '甚',
+      '才': '纔', '做': '作', '軟': '輭', '吧': '罷', '預': '豫',
+      '吃': '喫', '啊': '阿', '份': '分', '嗎': '麼', '餵': '餧',
+      '群': '羣', '既': '旣', '即': '卽', '針': '鍼', '略': '畧',
+      '秘': '祕', '祢': '你', '鬥': '鬬', '唇': '脣', '服侍': '服事',
+      '模仿': '模倣', '連結': '聯結', '警醒': '儆醒', '異像': '異象',
+      '樹幹': '樹榦', '掛慮': '罣慮', '消滅': '銷滅', '耽延': '躭延',
+      '託負': '託付', '提醒': '題醒', '顫抖': '戰抖', '合適': '合式',
+      '其它': '其他', '撒旦': '撒但', '憤怒': '忿怒', '紀念': '記念',
+      '翻譯': '繙譯', '遍地': '徧地', '折被子': '摺被子',
+      '哈利路亞': '阿利路亞', '讚成': '贊成', '說：': '說，',
+      '輭體': '軟體', '鍼對': '針對', '麼哪': '嗎哪', '豫士': '預士',
+      '豫官': '預官', '着者': '著者', '着時': '著時', '着作': '著作',
+      '裏民': '里民', '裏長': '里長'
+    };
+
+    const inputTextArea = document.getElementById('inputText');
+    const resultTextArea = document.getElementById('resultText');
+    const highlightedTextDiv = document.getElementById('highlightedText');
+    const replacementSummaryDiv = document.getElementById('replacementSummary');
+    const newWrongWordInput = document.getElementById('newWrongWord');
+    const newCorrectWordInput = document.getElementById('newCorrectWord');
+    const addWordButton = document.getElementById('addWordButton');
+    const replaceButton = document.getElementById('replaceButton');
+
+    function replaceText(text) {
+      let replacedText = text;
+      let replacementDetails = {};
+      let highlightedText = text;
+
+      for (const [wrong, correct] of Object.entries(correctionMap)) {
+        const regex = new RegExp(wrong, 'g');
+        const matches = replacedText.match(regex);
+        const count = matches ? matches.length : 0;
+
+        if (count > 0) {
+          replacementDetails[`${wrong} -> ${correct}`] = count;
+          highlightedText = highlightedText.replace(regex, `<span class="highlight">${correct}</span>`);
+        }
+
+        replacedText = replacedText.replace(regex, correct);
+      }
+
+      displayReplacementSummary(replacementDetails);
+      highlightedTextDiv.innerHTML = highlightedText;
+      return replacedText;
+    }
+
+    function displayReplacementSummary(details) {
+      const entries = Object.entries(details);
+      if (entries.length === 0) {
+        replacementSummaryDiv.textContent = '沒有發現需替換的字詞。';
+      } else {
+        replacementSummaryDiv.innerHTML = entries
+          .map(([key, value]) => `${key}：${value}次`)
+          .join('<br>');
+      }
+    }
+
+    replaceButton.addEventListener('click', () => {
+      const inputText = inputTextArea.value;
+      const replacedText = replaceText(inputText);
+      resultTextArea.value = replacedText;
+    });
+
+    addWordButton.addEventListener('click', () => {
+      const wrongWord = newWrongWordInput.value.trim();
+      const correctWord = newCorrectWordInput.value.trim();
+
+      if (wrongWord && correctWord) {
+        correctionMap[wrongWord] = correctWord;
+        alert(`已新增：${wrongWord} -> ${correctWord}`);
+        newWrongWordInput.value = '';
+        newCorrectWordInput.value = '';
+      } else {
+        alert('請輸入錯誤字和正確字。');
+      }
+    });
+  </script>
+</body>
+</html>
